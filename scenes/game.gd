@@ -15,5 +15,4 @@ func change_scene(scene_name, params=null):
 	if current_scene.has_method("init"):
 		current_scene.init(params)
 
-func _ready():
-	change_scene("level3", true)
+

@@ -16,6 +16,8 @@ func _input(event: InputEvent):
 	if event is InputEventKey and event.pressed and event.physical_keycode == KEY_F:
 		get_window().mode = Window.MODE_FULLSCREEN if get_window().mode != Window.MODE_FULLSCREEN else Window.MODE_WINDOWED
 
+func close_black():
+	$Dark.hide()
 	
 func play_text(txt: String):
 	var text : RichTextLabel = %Text

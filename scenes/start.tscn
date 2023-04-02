@@ -1,5 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://ckdj4sc4bkgqp"]
+[gd_scene load_steps=3 format=3 uid="uid://ckdj4sc4bkgqp"]
 
+[ext_resource type="Script" path="res://scenes/start.gd" id="1_5ntbt"]
 [ext_resource type="FontFile" uid="uid://b5tw8gc8xihev" path="res://assets/Neucha-Regular.ttf" id="1_p1wih"]
 
 [node name="Control" type="Control"]
@@ -9,16 +10,40 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_5ntbt")
 
 [node name="Label" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_bottom = -857.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_fonts/font = ExtResource("1_p1wih")
 theme_override_font_sizes/font_size = 200
 text = "TAKO"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label2" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 273.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("1_p1wih")
+theme_override_font_sizes/font_size = 64
+text = "Управление:
+W - левей
+S - правей
+Space - прыгай
+Shift - придержи сомбреро
+F - полный экран
+
+Space - закрыть это надоедливое окно и играть уже"
 horizontal_alignment = 1
 vertical_alignment = 1
