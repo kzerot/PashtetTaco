@@ -1,0 +1,170 @@
+[gd_scene load_steps=7 format=3 uid="uid://c1fo2ga4labv"]
+
+[ext_resource type="Script" path="res://scenes/UI.gd" id="1_ascq6"]
+[ext_resource type="Texture2D" uid="uid://iwenfv7hmoah" path="res://assets/UITEXT2.png" id="1_urnyv"]
+[ext_resource type="FontFile" uid="uid://b5tw8gc8xihev" path="res://assets/Neucha-Regular.ttf" id="3_8adct"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ohnjg"]
+content_margin_left = 200.0
+content_margin_top = 200.0
+content_margin_right = 200.0
+content_margin_bottom = 180.0
+texture = ExtResource("1_urnyv")
+
+[sub_resource type="Shader" id="Shader_0rrcn"]
+code = "/*
+	CRT shader for Godot Engine by Yui Kinomoto @arlez80
+*/
+shader_type canvas_item;
+
+uniform sampler2D SCREEN_TEXTURE: hint_screen_texture, filter_linear_mipmap;
+
+
+uniform float crt_curve : hint_range( 0.0, 1.0 ) = 0.02;
+
+uniform float crt_scan_line_color : hint_range( 0.0, 1.0 ) = 0.347;
+
+uniform float aperture_grille_rate : hint_range( 0.0, 1.0 ) = 0.4;
+
+uniform float rf_switch_esque_blur : hint_range( 0.0, 1.0 ) = 1.0;
+
+uniform float white_noise_rate : hint_range( 0.0, 1.0 ) = 0.0;
+
+float random( vec2 pos )
+{ 
+	return fract(sin(dot(pos, vec2(12.9898,78.233))) * 43758.5453);
+}
+
+void fragment( )
+{
+
+	vec2 crt_curve_shift = ( vec2( 1.0, 1.0 ) - sin( UV.yx * PI ) ) * crt_curve;
+	vec2 crt_curve_scale = vec2( 1.0, 1.0 ) + crt_curve_shift * 2.0;
+	vec2 texture_fixed_uv = UV * crt_curve_scale - crt_curve_shift;
+	vec2 fixed_uv = SCREEN_UV * crt_curve_scale - crt_curve_shift;
+
+	float enable_color = float( 0.0 <= texture_fixed_uv.x && texture_fixed_uv.x <= 1.0 && 0.0 <= texture_fixed_uv.y && texture_fixed_uv.y <= 1.0 );
+
+
+	COLOR.rgb = (
+		(
+			texture( SCREEN_TEXTURE, fixed_uv ).rgb
+		*	( 1.0 - rf_switch_esque_blur * 0.5 )
+		)
+	+	(
+			(
+				texture( SCREEN_TEXTURE, fixed_uv + vec2( -SCREEN_PIXEL_SIZE.x * 3.1, 0.0 ) ).rgb
+			+	texture( SCREEN_TEXTURE, fixed_uv + vec2( SCREEN_PIXEL_SIZE.x * 3.1, 0.0 ) ).rgb
+			)
+			*	( rf_switch_esque_blur * 0.25 )	
+		)
+	) * enable_color;
+	COLOR.a = 0.5;
+//	COLOR.r *= 1.4;
+//	COLOR.g *= 1.4;
+//	COLOR.b *= 0.7;
+
+	vec2 aperture_grille_pixel = vec2( floor( ( fixed_uv.x / SCREEN_PIXEL_SIZE.x ) / 3.0 ) * 3.0, fixed_uv.y );
+
+	float white_noise = random( aperture_grille_pixel + vec2( sin( TIME * 0.543254 ), cos( TIME * 0.254323563 ) ) );
+	COLOR.rgb = mix(
+		COLOR.rgb
+	,	vec3( white_noise, white_noise, white_noise )
+	,	white_noise_rate * enable_color
+	);
+
+
+	float aperture_grille_point = mod( ( ( SCREEN_UV.x * crt_curve_scale.x ) - crt_curve_shift.x ) / SCREEN_PIXEL_SIZE.x, 3.0 );
+	float aperture_grille_r_rate = clamp( 1.0 - aperture_grille_point, 0.0, 1.0 ) + clamp( aperture_grille_point - 2.0, 0.0, 1.0 );
+	float aperture_grille_g_rate = clamp( 1.0 - abs( 1.0 - aperture_grille_point ), 0.0, 1.0 );
+	float aperture_grille_b_rate = 1.0 - aperture_grille_r_rate - aperture_grille_g_rate;
+	COLOR = clamp(
+		COLOR * vec4(
+			normalize( vec3(
+				clamp( aperture_grille_r_rate, aperture_grille_rate, 1.0 )
+			,	clamp( aperture_grille_g_rate, aperture_grille_rate, 1.0 )
+			,	clamp( aperture_grille_b_rate, aperture_grille_rate, 1.0 )
+			) )
+		,	1.0
+		)
+	,	vec4( 0.0, 0.0, 0.0, 0.0 )
+	,	vec4( 1.0, 1.0, 1.0, 1.0 )
+	);
+
+	COLOR = mix(
+		COLOR
+	,	vec4( 0.0, 0.0, 0.0, 1.0 )
+	,	float( 0 == int( fixed_uv.y / SCREEN_PIXEL_SIZE.y ) % 2 ) * crt_scan_line_color
+	);
+}"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fvln8"]
+shader = SubResource("Shader_0rrcn")
+shader_parameter/crt_curve = 0.02
+shader_parameter/crt_scan_line_color = 0.01
+shader_parameter/aperture_grille_rate = 0.366
+shader_parameter/rf_switch_esque_blur = 0.415
+shader_parameter/white_noise_rate = 0.112
+
+[node name="UI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_ascq6")
+
+[node name="Text" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -525.0
+offset_top = -391.0
+offset_right = 525.0
+offset_bottom = 391.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_ohnjg")
+
+[node name="CenterContainer" type="CenterContainer" parent="Text"]
+layout_mode = 2
+
+[node name="Text" type="RichTextLabel" parent="Text/CenterContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(550, 0)
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
+theme_override_colors/selection_color = Color(0, 0, 0, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/table_odd_row_bg = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("3_8adct")
+theme_override_font_sizes/normal_font_size = 32
+theme_override_font_sizes/bold_font_size = 32
+theme_override_font_sizes/italics_font_size = 32
+theme_override_font_sizes/bold_italics_font_size = 32
+theme_override_font_sizes/mono_font_size = 32
+bbcode_enabled = true
+text = "[center]Hello there![/center]"
+fit_content = true
+
+[node name="YellowFilter" type="ColorRect" parent="."]
+visible = false
+material = SubResource("ShaderMaterial_fvln8")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -51.0
+offset_top = -44.0
+offset_right = 57.0
+offset_bottom = 51.0
+grow_horizontal = 2
+grow_vertical = 2

@@ -1,0 +1,40 @@
+[gd_scene load_steps=7 format=3 uid="uid://camav0kvixgm3"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xs6lm"]
+emission_enabled = true
+emission = Color(0, 0.854902, 0.847059, 1)
+
+[sub_resource type="Curve" id="Curve_h0pyo"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.136364, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_t2t5y"]
+curve = SubResource("Curve_h0pyo")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_1t2gd"]
+emission_shape = 6
+emission_ring_axis = Vector3(0, 0, 1)
+emission_ring_height = 1.0
+emission_ring_radius = 5.0
+emission_ring_inner_radius = 3.0
+gravity = Vector3(0, 0, 0)
+radial_accel_max = 2.0
+scale_curve = SubResource("CurveTexture_t2t5y")
+color = Color(0, 0.827451, 0.831373, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_pb3kh"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_hsmqo"]
+size = Vector3(6.49184, 8.64705, 8.55101)
+
+[node name="Portal" type="Area3D"]
+
+[node name="GPUParticles3D" type="GPUParticles3D" parent="."]
+material_override = SubResource("StandardMaterial3D_xs6lm")
+amount = 128
+lifetime = 2.0
+process_material = SubResource("ParticleProcessMaterial_1t2gd")
+draw_pass_1 = SubResource("SphereMesh_pb3kh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_hsmqo")

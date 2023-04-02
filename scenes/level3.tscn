@@ -1,0 +1,372 @@
+[gd_scene load_steps=19 format=3 uid="uid://fi3msvtxq6os"]
+
+[ext_resource type="Script" path="res://scenes/level3.gd" id="1_6rnn1"]
+[ext_resource type="Script" path="res://scenes/UI.gd" id="2_ot6dh"]
+[ext_resource type="Texture2D" uid="uid://iwenfv7hmoah" path="res://assets/UITEXT2.png" id="3_lmbb4"]
+[ext_resource type="FontFile" uid="uid://b5tw8gc8xihev" path="res://assets/Neucha-Regular.ttf" id="4_df3cv"]
+[ext_resource type="PackedScene" uid="uid://cyo8fikkky70y" path="res://scenes/skeleton_simple.tscn" id="5_mgh4m"]
+[ext_resource type="PackedScene" uid="uid://cdh66ah72aqgk" path="res://assets/stall.glb" id="6_bfeuj"]
+[ext_resource type="MeshLibrary" uid="uid://26nfjd80povy" path="res://scenes/terrain.tres" id="7_1efs6"]
+[ext_resource type="Texture2D" uid="uid://d8bjhij8ne3x" path="res://assets/materials/HDR_029_Sky_Cloudy_Bg.jpg" id="8_4sy6e"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ohnjg"]
+content_margin_left = 200.0
+content_margin_top = 200.0
+content_margin_right = 200.0
+content_margin_bottom = 180.0
+texture = ExtResource("3_lmbb4")
+
+[sub_resource type="Shader" id="Shader_0rrcn"]
+code = "/*
+	CRT shader for Godot Engine by Yui Kinomoto @arlez80
+*/
+shader_type canvas_item;
+
+uniform sampler2D SCREEN_TEXTURE: hint_screen_texture, filter_linear_mipmap;
+
+
+uniform float crt_curve : hint_range( 0.0, 1.0 ) = 0.02;
+
+uniform float crt_scan_line_color : hint_range( 0.0, 1.0 ) = 0.347;
+
+uniform float aperture_grille_rate : hint_range( 0.0, 1.0 ) = 0.4;
+
+uniform float rf_switch_esque_blur : hint_range( 0.0, 1.0 ) = 1.0;
+
+uniform float white_noise_rate : hint_range( 0.0, 1.0 ) = 0.0;
+
+float random( vec2 pos )
+{ 
+	return fract(sin(dot(pos, vec2(12.9898,78.233))) * 43758.5453);
+}
+
+void fragment( )
+{
+
+	vec2 crt_curve_shift = ( vec2( 1.0, 1.0 ) - sin( UV.yx * PI ) ) * crt_curve;
+	vec2 crt_curve_scale = vec2( 1.0, 1.0 ) + crt_curve_shift * 2.0;
+	vec2 texture_fixed_uv = UV * crt_curve_scale - crt_curve_shift;
+	vec2 fixed_uv = SCREEN_UV * crt_curve_scale - crt_curve_shift;
+
+	float enable_color = float( 0.0 <= texture_fixed_uv.x && texture_fixed_uv.x <= 1.0 && 0.0 <= texture_fixed_uv.y && texture_fixed_uv.y <= 1.0 );
+
+
+	COLOR.rgb = (
+		(
+			texture( SCREEN_TEXTURE, fixed_uv ).rgb
+		*	( 1.0 - rf_switch_esque_blur * 0.5 )
+		)
+	+	(
+			(
+				texture( SCREEN_TEXTURE, fixed_uv + vec2( -SCREEN_PIXEL_SIZE.x * 3.1, 0.0 ) ).rgb
+			+	texture( SCREEN_TEXTURE, fixed_uv + vec2( SCREEN_PIXEL_SIZE.x * 3.1, 0.0 ) ).rgb
+			)
+			*	( rf_switch_esque_blur * 0.25 )	
+		)
+	) * enable_color;
+	COLOR.a = 0.5;
+//	COLOR.r *= 1.4;
+//	COLOR.g *= 1.4;
+//	COLOR.b *= 0.7;
+
+	vec2 aperture_grille_pixel = vec2( floor( ( fixed_uv.x / SCREEN_PIXEL_SIZE.x ) / 3.0 ) * 3.0, fixed_uv.y );
+
+	float white_noise = random( aperture_grille_pixel + vec2( sin( TIME * 0.543254 ), cos( TIME * 0.254323563 ) ) );
+	COLOR.rgb = mix(
+		COLOR.rgb
+	,	vec3( white_noise, white_noise, white_noise )
+	,	white_noise_rate * enable_color
+	);
+
+
+	float aperture_grille_point = mod( ( ( SCREEN_UV.x * crt_curve_scale.x ) - crt_curve_shift.x ) / SCREEN_PIXEL_SIZE.x, 3.0 );
+	float aperture_grille_r_rate = clamp( 1.0 - aperture_grille_point, 0.0, 1.0 ) + clamp( aperture_grille_point - 2.0, 0.0, 1.0 );
+	float aperture_grille_g_rate = clamp( 1.0 - abs( 1.0 - aperture_grille_point ), 0.0, 1.0 );
+	float aperture_grille_b_rate = 1.0 - aperture_grille_r_rate - aperture_grille_g_rate;
+	COLOR = clamp(
+		COLOR * vec4(
+			normalize( vec3(
+				clamp( aperture_grille_r_rate, aperture_grille_rate, 1.0 )
+			,	clamp( aperture_grille_g_rate, aperture_grille_rate, 1.0 )
+			,	clamp( aperture_grille_b_rate, aperture_grille_rate, 1.0 )
+			) )
+		,	1.0
+		)
+	,	vec4( 0.0, 0.0, 0.0, 0.0 )
+	,	vec4( 1.0, 1.0, 1.0, 1.0 )
+	);
+
+	COLOR = mix(
+		COLOR
+	,	vec4( 0.0, 0.0, 0.0, 1.0 )
+	,	float( 0 == int( fixed_uv.y / SCREEN_PIXEL_SIZE.y ) % 2 ) * crt_scan_line_color
+	);
+}"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fvln8"]
+shader = SubResource("Shader_0rrcn")
+shader_parameter/crt_curve = 0.02
+shader_parameter/crt_scan_line_color = 0.01
+shader_parameter/aperture_grille_rate = 0.366
+shader_parameter/rf_switch_esque_blur = 0.415
+shader_parameter/white_noise_rate = 0.112
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_8kotw"]
+panorama = ExtResource("8_4sy6e")
+
+[sub_resource type="Sky" id="Sky_bu1pv"]
+sky_material = SubResource("PanoramaSkyMaterial_8kotw")
+
+[sub_resource type="Environment" id="Environment_4x2fx"]
+background_mode = 2
+sky = SubResource("Sky_bu1pv")
+ambient_light_source = 3
+ssao_enabled = true
+ssil_enabled = true
+sdfgi_enabled = true
+glow_enabled = true
+fog_enabled = true
+fog_light_color = Color(0.776471, 0.815686, 0.623529, 1)
+fog_density = 0.001
+volumetric_fog_density = 0.01
+volumetric_fog_albedo = Color(1, 1, 0.886275, 1)
+volumetric_fog_sky_affect = 0.0
+adjustment_enabled = true
+
+[sub_resource type="Animation" id="Animation_2vmuc"]
+resource_name = "Movie"
+length = 10.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Camera3D:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 10),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector3(0, 7.96374, 20.128), Vector3(0, 3.72912, 6.95184)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Camera3D:rotation")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 10),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector3(-0.690382, 0, 0), Vector3(-0.255185, 0, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_5viki"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Camera3D:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 7.96374, 20.128)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Camera3D:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(-0.690382, 0, 0)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("UI/Label:position")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0, 1080)]
+}
+
+[sub_resource type="Animation" id="Animation_5sluv"]
+resource_name = "Credits"
+length = 20.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("UI/Label:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 20),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(0, 1595), Vector2(0, -1604)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_4n5ir"]
+_data = {
+"Credits": SubResource("Animation_5sluv"),
+"Movie": SubResource("Animation_2vmuc"),
+"RESET": SubResource("Animation_5viki")
+}
+
+[node name="Level3" type="Node3D"]
+script = ExtResource("1_6rnn1")
+
+[node name="UI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_ot6dh")
+
+[node name="Text" type="PanelContainer" parent="UI"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -525.0
+offset_top = -391.0
+offset_right = 525.0
+offset_bottom = 391.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_ohnjg")
+
+[node name="CenterContainer" type="CenterContainer" parent="UI/Text"]
+layout_mode = 2
+
+[node name="Text" type="RichTextLabel" parent="UI/Text/CenterContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(550, 0)
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
+theme_override_colors/selection_color = Color(0, 0, 0, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/table_odd_row_bg = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("4_df3cv")
+theme_override_font_sizes/normal_font_size = 32
+theme_override_font_sizes/bold_font_size = 32
+theme_override_font_sizes/italics_font_size = 32
+theme_override_font_sizes/bold_italics_font_size = 32
+theme_override_font_sizes/mono_font_size = 32
+bbcode_enabled = true
+text = "[center]Hello there![/center]"
+fit_content = true
+
+[node name="135632" type="VScrollBar" parent="UI/Text/CenterContainer/Text"]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+step = 1.0
+
+[node name="17691" type="VScrollBar" parent="UI/Text/CenterContainer/Text"]
+visible = false
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -8.0
+max_value = 35.0
+step = 1.0
+page = 35.0
+
+[node name="YellowFilter" type="ColorRect" parent="UI"]
+visible = false
+material = SubResource("ShaderMaterial_fvln8")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -51.0
+offset_top = -44.0
+offset_right = 57.0
+offset_bottom = 51.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="UI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 1080.0
+offset_bottom = 1360.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("4_df3cv")
+theme_override_font_sizes/font_size = 60
+text = "Credits:
+
+Producer: Max Brajsky
+Lead 3D artist: Max Brajsky
+Lead 2D artist: Surak
+Lead programmer: Max Brajsky
+Level design: Max Brajsky
+Sound design: Ada Maria and her toy castanetas
+Lead game design: Roro
+Other game design: Max Brajsky
+
+Test team:
+Mi esposa Roro
+Ada Maria, mi hija (stress test, pressing 100 keys at once)
+
+Music generated by Mubert https://mubert.com/render
+
+Not so many skeletons were harmed during prodaction. 
+
+Donate me taco, pls. "
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Skeleton" parent="." instance=ExtResource("5_mgh4m")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.23835, 0)
+
+[node name="stall" parent="." instance=ExtResource("6_bfeuj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.23835, 0)
+
+[node name="GridMap" type="GridMap" parent="."]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
+mesh_library = ExtResource("7_1efs6")
+cell_size = Vector3(10, 5, 20)
+data = {
+"cells": PackedInt32Array(-65542, 0, 2, -65541, 0, 2, -65540, 0, 2, -65539, 0, 2, -65538, 0, 2, -65537, 0, 2, -131072, 0, 2, -131071, 0, 2, -131070, 0, 2, -131069, 0, 2, -131068, 0, 2, -131067, 0, 2, -131067, 2, 2, -131068, 2, 2, -131069, 2, 2, -131070, 2, 2, -131071, 2, 2, -131072, 2, 2, -65537, 2, 2, -65538, 2, 2, -65539, 2, 2, -65540, 2, 2, -65541, 2, 2, -65547, 65532, 2, -65547, 65533, 2, -65547, 65534, 2, -65547, 65535, 2, -65547, 0, 2, -65547, 1, 2, -65547, 2, 2, -65547, 3, 2, -65547, 4, 2, -65546, 65532, 2, -65546, 65533, 2, -65546, 65534, 2, -65546, 65535, 2, -65546, 0, 2, -65546, 1, 2, -65546, 2, 2, -65546, 3, 2, -65546, 4, 2, -65545, 65532, 2, -65545, 65533, 2, -65545, 65534, 2, -65545, 65535, 2, -65545, 0, 2, -65545, 1, 2, -65545, 2, 2, -65545, 3, 2, -65545, 4, 2, -65544, 65532, 2, -65544, 65533, 2, -65544, 65534, 2, -65544, 65535, 2, -65544, 0, 2, -65544, 1, 2, -65544, 2, 2, -65544, 3, 2, -65544, 4, 2, -65543, 65532, 2, -65543, 65533, 2, -65543, 65534, 2, -65543, 65535, 2, -65543, 0, 2, -65543, 1, 2, -65543, 2, 2, -65543, 3, 2, -65543, 4, 2, -65542, 65532, 2, -65542, 65533, 2, -65542, 65534, 2, -65542, 65535, 2, -65542, 1, 2, -65542, 2, 2, -65542, 3, 2, -65542, 4, 2, -65541, 65532, 2, -65541, 65533, 2, -65541, 65534, 2, -65541, 65535, 2, -65541, 1, 2, -65541, 3, 2, -65541, 4, 2, -65540, 65532, 2, -65540, 65533, 2, -65540, 65534, 2, -65540, 65535, 2, -65540, 1, 2, -65540, 3, 2, -65540, 4, 2, -65539, 65532, 2, -65539, 65533, 2, -65539, 65534, 2, -65539, 65535, 2, -65539, 1, 2, -65539, 3, 2, -65539, 4, 2, -65538, 65532, 2, -65538, 65533, 2, -65538, 65534, 2, -65538, 65535, 2, -65538, 1, 2, -65538, 3, 2, -65538, 4, 2, -65537, 65532, 2, -65537, 65533, 2, -65537, 65534, 2, -65537, 65535, 2, -65537, 1, 2, -65537, 3, 2, -65537, 4, 2, -131072, 65532, 2, -131072, 65533, 2, -131072, 65534, 2, -131072, 65535, 2, -131072, 1, 2, -131072, 3, 2, -131072, 4, 2, -131071, 65532, 2, -131071, 65533, 2, -131071, 65534, 2, -131071, 65535, 2, -131071, 1, 2, -131071, 3, 2, -131071, 4, 2, -131070, 65532, 2, -131070, 65533, 2, -131070, 65534, 2, -131070, 65535, 2, -131070, 1, 2, -131070, 3, 2, -131070, 4, 2, -131069, 65532, 2, -131069, 65533, 2, -131069, 65534, 2, -131069, 65535, 2, -131069, 1, 2, -131069, 3, 2, -131069, 4, 2, -131068, 65532, 2, -131068, 65533, 2, -131068, 65534, 2, -131068, 65535, 2, -131068, 1, 2, -131068, 3, 2, -131068, 4, 2, -131067, 65532, 2, -131067, 65533, 2, -131067, 65534, 2, -131067, 65535, 2, -131067, 1, 2, -131067, 3, 2, -131067, 4, 2, -131066, 65532, 2, -131066, 65533, 2, -131066, 65534, 2, -131066, 65535, 2, -131066, 0, 2, -131066, 1, 2, -131066, 2, 2, -131066, 3, 2, -131066, 4, 2, -131065, 65532, 2, -131065, 65533, 2, -131065, 65534, 2, -131065, 65535, 2, -131065, 0, 2, -131065, 1, 2, -131065, 2, 2, -131065, 3, 2, -131065, 4, 2, -131064, 65532, 2, -131064, 65533, 2, -131064, 65534, 2, -131064, 65535, 2, -131064, 0, 2, -131064, 1, 2, -131064, 2, 2, -131064, 3, 2, -131064, 4, 2, -131063, 65532, 2, -131063, 65533, 2, -131063, 65534, 2, -131063, 65535, 2, -131063, 0, 2, -131063, 1, 2, -131063, 2, 2, -131063, 3, 2, -131063, 4, 2, -131062, 65532, 2, -131062, 65533, 2, -131062, 65534, 2, -131062, 65535, 2, -131062, 0, 2, -131062, 1, 2, -131062, 2, 2, -131062, 3, 2, -131062, 4, 2, -131061, 65532, 2, -131061, 65533, 2, -131061, 65534, 2, -131061, 65535, 2, -131061, 0, 2, -131061, 1, 2, -131061, 2, 2, -131061, 3, 2, -131061, 4, 2, -131060, 65532, 2, -131060, 65533, 2, -131060, 65534, 2, -131060, 65535, 2, -131060, 0, 2, -131060, 1, 2, -131060, 2, 2, -131060, 3, 2, -131060, 4, 2, -131059, 65532, 2, -131059, 65533, 2, -131059, 65534, 2, -131059, 65535, 2, -131059, 0, 2, -131059, 1, 2, -131059, 2, 2, -131059, 3, 2, -131059, 4, 2, -131058, 65532, 2, -131058, 65533, 2, -131058, 65534, 2, -131058, 65535, 2, -131058, 0, 2, -131058, 1, 2, -131058, 2, 2, -131058, 3, 2, -131058, 4, 2, -131057, 65532, 2, -131057, 65533, 2, -131057, 65534, 2, -131057, 65535, 2, -131057, 0, 2, -131057, 1, 2, -131057, 2, 2, -131057, 3, 2, -131057, 4, 2, -131056, 65532, 2, -131056, 65533, 2, -131056, 65534, 2, -131056, 65535, 2, -131056, 0, 2, -131056, 1, 2, -131056, 2, 2, -131056, 3, 2, -131056, 4, 2, -131055, 65532, 2, -131055, 65533, 2, -131055, 65534, 2, -131055, 65535, 2, -131055, 0, 2, -131055, 1, 2, -131055, 2, 2, -131055, 3, 2, -131055, 4, 2, -3, 65533, 7, -65536, 65534, 7, -65531, 65533, 7, -6, 0, 1441799, -7, 65534, 1441799, -65528, 65534, 1441800, -65530, 0, 1441800, -65535, 65533, 1441800, -2, 65534, 655368, -65530, 65534, 655368, -65533, 0, 655368, -65533, 65533, 655368, -4, 65535, 655368, -5, 65533, 655368, -6, 1, 655368, -65531, 1, 655368, -7, 65532, 655364, -65526, 65532, 655364, -65527, 65532, 655364, -65528, 65532, 655364, -65529, 65532, 655364, -65530, 65532, 655364, -65531, 65532, 655364, -65532, 65532, 655364, -65533, 65532, 655364, -65533, 65531, 655364, -65534, 65531, 655364, -65535, 65531, 655364, -65536, 65531, 655364, -1, 65531, 655364, -2, 65531, 655364, -3, 65531, 655364, -4, 65531, 655364, -4, 65532, 655364, -5, 65532, 655364, -6, 65532, 655364, -5, 65531, 655364, -65534, 65532, 655364, -65535, 65532, 655364, -65536, 65532, 655364, -1, 65532, 655364, -2, 65532, 655364, -3, 65532, 655364, -65532, 65531, 655364, -65531, 65531, 655364, -65530, 65531, 655364, -65529, 65531, 655364, -65529, 65530, 655364, -65528, 65530, 655364, -65527, 65530, 655364, -65527, 65531, 655364, -65528, 65531, 655364, -65536, 65530, 655364, -1, 65530, 655364, -2, 65530, 655364, -3, 65530, 655364, -4, 65530, 655364, -5, 65530, 655364, -6, 65530, 655364, -7, 65530, 655364, -7, 65531, 655364, -6, 65531, 655364, -65536, 65529, 655364, -65535, 65529, 655364, -65534, 65529, 655364, -65533, 65529, 655364, -65532, 65529, 655364, -65531, 65529, 655364, -65530, 65529, 655364, -65529, 65529, 655364, -65528, 65529, 655364, -65530, 65530, 655364, -65531, 65530, 655364, -65532, 65530, 655364, -65533, 65530, 655364, -65534, 65530, 655364, -65535, 65530, 655364, -2, 65529, 655364, -3, 65529, 655364, -1, 65529, 655364)
+}
+metadata/_editor_floor_ = Vector3(0, -1, 0)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_4x2fx")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.676375, -0.614652, 0.405858, 0, 0.55102, 0.834492, -0.736558, -0.564429, 0.372696, 0, 15.6962, 0)
+shadow_enabled = true
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.771003, 0.636832, 0, -0.636832, 0.771003, 0, 7.96374, 20.128)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_4n5ir")
+}

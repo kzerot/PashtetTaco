@@ -1,0 +1,48 @@
+[gd_scene load_steps=8 format=3 uid="uid://c7uookggixos4"]
+
+[ext_resource type="Script" path="res://scenes/whoosh.gd" id="1_6figj"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jhfq3"]
+albedo_color = Color(0.811765, 1, 1, 1)
+emission_enabled = true
+emission = Color(0.447059, 0.623529, 0.584314, 1)
+
+[sub_resource type="Curve" id="Curve_4r7vv"]
+_data = [Vector2(0, 0.490909), 0.0, 0.0, 0, 0, Vector2(0.155844, 1), 0.88421, 0.88421, 0, 0, Vector2(0.857143, 1), -0.84, -0.84, 0, 0, Vector2(0.993506, 0.118182), -0.907407, 0.0, 0, 0]
+point_count = 4
+
+[sub_resource type="CurveTexture" id="CurveTexture_23i0y"]
+curve = SubResource("Curve_4r7vv")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_os6vc"]
+emission_shape = 3
+emission_box_extents = Vector3(5, 2, 5)
+gravity = Vector3(0, 1.5, 0)
+initial_velocity_max = 1.0
+scale_curve = SubResource("CurveTexture_23i0y")
+
+[sub_resource type="SphereMesh" id="SphereMesh_m32jl"]
+height = 1.2
+radial_segments = 16
+rings = 8
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wj7jy"]
+size = Vector3(10, 29.7855, 10)
+
+[node name="Whoosh" type="Area3D"]
+script = ExtResource("1_6figj")
+
+[node name="GPUParticles3D" type="GPUParticles3D" parent="."]
+material_overlay = SubResource("StandardMaterial3D_jhfq3")
+amount = 128
+lifetime = 6.0
+visibility_aabb = AABB(-5.64253, -12.8012, -9.27236, 11.2851, 25.6024, 18.5447)
+process_material = SubResource("ParticleProcessMaterial_os6vc")
+draw_pass_1 = SubResource("SphereMesh_m32jl")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.20485, 0)
+shape = SubResource("BoxShape3D_wj7jy")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="body_exited" from="." to="." method="_on_body_exited"]

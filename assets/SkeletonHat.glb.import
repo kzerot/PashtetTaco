@@ -1,0 +1,44 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://cvn75iwbhmrlk"
+path="res://.godot/imported/SkeletonHat.glb-7fad391f9cf940cc7d31b316c5d9ca06.scn"
+
+[deps]
+
+source_file="res://assets/SkeletonHat.glb"
+dest_files=["res://.godot/imported/SkeletonHat.glb-7fad391f9cf940cc7d31b316c5d9ca06.scn"]
+
+[params]
+
+nodes/root_type="Node3D"
+nodes/root_name="Scene Root"
+nodes/apply_root_scale=true
+nodes/root_scale=1.0
+meshes/ensure_tangents=true
+meshes/generate_lods=true
+meshes/create_shadow_meshes=true
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+skins/use_named_skins=true
+animation/import=true
+animation/fps=30
+animation/trimming=false
+animation/remove_immutable_tracks=true
+import_script/path=""
+_subresources={
+"materials": {
+"Material": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/hat.tres"
+}
+},
+"nodes": {
+"PATH:AnimationPlayer": {
+"import/skip_import": true
+}
+}
+}
+gltf/embedded_image_handling=1

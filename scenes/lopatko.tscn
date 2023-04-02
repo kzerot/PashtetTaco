@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://b4vpwctox1qq7"]
+
+[ext_resource type="PackedScene" uid="uid://bbcc0e7ak8j8t" path="res://assets/lopatko.glb" id="1_1kfjj"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4qjl4"]
+albedo_color = Color(0.682353, 0.631373, 0.498039, 1)
+
+[node name="lopatko" instance=ExtResource("1_1kfjj")]
+
+[node name="Lopatko" parent="." index="0"]
+material_override = SubResource("StandardMaterial3D_4qjl4")
