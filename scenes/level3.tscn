@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://fi3msvtxq6os"]
+[gd_scene load_steps=16 format=3 uid="uid://fi3msvtxq6os"]
 
 [ext_resource type="Script" path="res://scenes/level3.gd" id="1_6rnn1"]
 [ext_resource type="Script" path="res://scenes/UI.gd" id="2_ot6dh"]
@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://cyo8fikkky70y" path="res://scenes/skeleton_simple.tscn" id="5_mgh4m"]
 [ext_resource type="PackedScene" uid="uid://cdh66ah72aqgk" path="res://assets/stall.glb" id="6_bfeuj"]
 [ext_resource type="MeshLibrary" uid="uid://26nfjd80povy" path="res://scenes/terrain.tres" id="7_1efs6"]
-[ext_resource type="Texture2D" uid="uid://d8bjhij8ne3x" path="res://assets/materials/HDR_029_Sky_Cloudy_Bg.jpg" id="8_4sy6e"]
+[ext_resource type="Environment" uid="uid://dgwcsfl2sokla" path="res://scenes/env.tres" id="8_7w4a3"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ohnjg"]
 content_margin_left = 200.0
@@ -110,28 +110,6 @@ shader_parameter/crt_scan_line_color = 0.01
 shader_parameter/aperture_grille_rate = 0.366
 shader_parameter/rf_switch_esque_blur = 0.415
 shader_parameter/white_noise_rate = 0.112
-
-[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_8kotw"]
-panorama = ExtResource("8_4sy6e")
-
-[sub_resource type="Sky" id="Sky_bu1pv"]
-sky_material = SubResource("PanoramaSkyMaterial_8kotw")
-
-[sub_resource type="Environment" id="Environment_4x2fx"]
-background_mode = 2
-sky = SubResource("Sky_bu1pv")
-ambient_light_source = 3
-ssao_enabled = true
-ssil_enabled = true
-sdfgi_enabled = true
-glow_enabled = true
-fog_enabled = true
-fog_light_color = Color(0.776471, 0.815686, 0.623529, 1)
-fog_density = 0.001
-volumetric_fog_density = 0.01
-volumetric_fog_albedo = Color(1, 1, 0.886275, 1)
-volumetric_fog_sky_affect = 0.0
-adjustment_enabled = true
 
 [sub_resource type="Animation" id="Animation_2vmuc"]
 resource_name = "Movie"
@@ -353,7 +331,7 @@ data = {
 metadata/_editor_floor_ = Vector3(0, -1, 0)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_4x2fx")
+environment = ExtResource("8_7w4a3")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.676375, -0.614652, 0.405858, 0, 0.55102, 0.834492, -0.736558, -0.564429, 0.372696, 0, 15.6962, 0)

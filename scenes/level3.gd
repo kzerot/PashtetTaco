@@ -11,7 +11,9 @@ var textes = {
 
 # Called when the node enters the scene tree for the first time.
 func init(need_dialog=true):
-
+	$WorldEnvironment.environment = $WorldEnvironment.environment.duplicate()
+	$UI/YellowFilter.show()
+	$WorldEnvironment.environment.fog_light_color = Color.from_string("ccc38b", Color.LIGHT_YELLOW)
 	ui.play_text(textes["start"])
 	await ui.text_ended
 	

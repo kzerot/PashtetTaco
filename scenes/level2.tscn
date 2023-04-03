@@ -1,7 +1,7 @@
-[gd_scene load_steps=19 format=3 uid="uid://bakcigwu1ecip"]
+[gd_scene load_steps=16 format=3 uid="uid://bakcigwu1ecip"]
 
 [ext_resource type="Script" path="res://scenes/level2.gd" id="1_jixx2"]
-[ext_resource type="Texture2D" uid="uid://d8bjhij8ne3x" path="res://assets/materials/HDR_029_Sky_Cloudy_Bg.jpg" id="2_f3chk"]
+[ext_resource type="Environment" uid="uid://dgwcsfl2sokla" path="res://scenes/env.tres" id="2_mmcab"]
 [ext_resource type="MeshLibrary" uid="uid://26nfjd80povy" path="res://scenes/terrain.tres" id="3_8carr"]
 [ext_resource type="PackedScene" uid="uid://dek68pf3o8v1t" path="res://scenes/character.tscn" id="4_66qe0"]
 [ext_resource type="Script" path="res://scenes/FollowScelic.gd" id="5_nc7n1"]
@@ -11,28 +11,6 @@
 [ext_resource type="PackedScene" uid="uid://c7uookggixos4" path="res://scenes/whoosh.tscn" id="10_mk51m"]
 [ext_resource type="Script" path="res://scenes/cache_camera.gd" id="10_rvd0w"]
 [ext_resource type="PackedScene" uid="uid://cxgew5k8earha" path="res://assets/pan.glb" id="11_7grej"]
-
-[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_gxtmq"]
-panorama = ExtResource("2_f3chk")
-
-[sub_resource type="Sky" id="Sky_e6ill"]
-sky_material = SubResource("PanoramaSkyMaterial_gxtmq")
-
-[sub_resource type="Environment" id="Environment_84bnq"]
-background_mode = 2
-sky = SubResource("Sky_e6ill")
-ambient_light_source = 3
-ssao_enabled = true
-ssil_enabled = true
-sdfgi_enabled = true
-glow_enabled = true
-fog_enabled = true
-fog_light_color = Color(0.537255, 0.847059, 0.921569, 1)
-fog_density = 0.001
-volumetric_fog_density = 0.01
-volumetric_fog_albedo = Color(1, 1, 0.886275, 1)
-volumetric_fog_sky_affect = 0.0
-adjustment_enabled = true
 
 [sub_resource type="Animation" id="Animation_jwihf"]
 length = 0.001
@@ -55,7 +33,7 @@ size = Vector3(6.02704, 3.40694, 11.9364)
 script = ExtResource("1_jixx2")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_84bnq")
+environment = ExtResource("2_mmcab")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(-0.568605, 0.653223, -0.499988, -1.92041e-08, 0.607806, 0.794085, 0.822611, 0.451521, -0.345602, 0, 13.0112, 0)

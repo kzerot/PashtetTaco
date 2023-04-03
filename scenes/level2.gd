@@ -43,4 +43,6 @@ func _on_pan_body_entered(body):
 		
 		skeleton.unpause()
 		$UI/YellowFilter.show()
+		
+		$WorldEnvironment.environment = $WorldEnvironment.environment.duplicate()
 		$WorldEnvironment.environment.fog_light_color = Color.from_string("ccc38b", Color.LIGHT_YELLOW)
